@@ -1,0 +1,72 @@
+#!/bin/sh
+
+cd $1
+echo "entering directory $1"
+
+VERSION=0.25
+
+HOST=`uname | tr '[a-z]' '[A-Z]' | sed 's/[-\.0-9_]//g'`
+HFILES=`echo *.h`
+
+if [ "$HFILES" = "*.h" ] ;  then
+	HFILES=""
+fi	
+
+if [ -z "$CC" ] && gcc -v > /dev/null 2>&1 ; then
+	CC=gcc
+	CFLAGS="$CFLAGS -O2"
+fi	
+
+if [ $HOST = "SINIX" ] || [ $HOST = "SUNOS" ] ; then
+	LDFLAGS="$LDFLAGS -lnsl -lc -lsocket -lresolv"
+fi	
+
+if [ $HOST = "CYGWINNT" ] || [ $HOST = "CYGWIN" ] ; then
+	CFLAGS="$CFLAGS -DWIN32"
+	MTYPE="i386"
+fi
+
+if [ $HOST = "HPUX" ] ; then
+	if [ -z $CC ] || [ $CC != "gcc" ] ; then
+		CFLAGS="$CFLAGS -Aa -DHPUX -D_HPUX_SOURCE +w1"
+	fi
+	MTYPE="`uname -r`" 
+fi	
+
+if [ $HOST = "LINUX" ] ; then
+	MTYPE=`uname -i`
+fi	
+
+if [ $HOST = "AIX" ] ; then
+	MTYPE="`uname -v`.`uname -r`"
+fi
+
+if [ $HOST = "SUNOS" ] ; then
+	MTYPE=`uname -r`
+fi	
+
+CFILES=`echo *.c`
+OFILES=`echo *.c | sed 's/\.c/\.o/g'`
+
+echo "HOST=$HOST" > Makefile
+echo "MTYPE=$MTYPE" >> Makefile
+echo "HFILES=$HFILES" >> Makefile
+echo "CFILES=$CFILES" >> Makefile
+echo "OFILES=$OFILES" >> Makefile
+echo "VERSION=$VERSION" >> Makefile
+echo "CC=$CC" >> Makefile
+echo "CFLAGS=$CFLAGS" >> Makefile
+echo "LDFLAGS=$LDFLAGS" >> Makefile
+echo >> Makefile
+
+cat < Makefile.in >> Makefile
+
+for i in $CFILES ; do
+    obj=` echo $i | sed 's/\.c$//'`.o
+    cat >> Makefile <<EOF
+$obj: $i \$(HFILES)
+	\$(CC) -o $obj -c $i \$(CFLAGS) -D$HOST -DVERSION='"$VERSION"'
+
+EOF
+done
+

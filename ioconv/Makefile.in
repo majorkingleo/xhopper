@@ -1,0 +1,8 @@
+
+ioconv: $(OFILES) 
+	$(CC) -o ioconv $(OFILES) $(CFLAGS) $(LDFLAGS)
+
+clean:
+	rm -f core* ioconv $(OFILES)
+
+

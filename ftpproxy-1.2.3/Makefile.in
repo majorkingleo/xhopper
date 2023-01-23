@@ -1,0 +1,6 @@
+
+libftpproxy.a: $(OFILES)
+	ar r libftpproxy.a $(OFILES)
+
+clean:
+	rm -f core* libftpproxy.a $(OFILES)

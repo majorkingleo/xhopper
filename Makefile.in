@@ -1,0 +1,68 @@
+ZVER=1.1.4
+FVER=1.2.3
+PACKAGE=xhopper
+DIST=$(PACKAGE)-$(VERSION)
+BINDIST=$(PACKAGE)-$(VERSION)-$(HOST)-$(MTYPE)
+
+prefix=$(DESTDIR)/usr/local
+bindir=$(prefix)/bin
+docdir=$(prefix)/share/doc/$(PACKAGE)
+
+all: xhopper ioconv/ioconv
+
+zlib/libz.a:
+	cd zlib && make
+
+ftpproxy/libftpproxy.a:
+	cd ftpproxy && make
+
+xhopper: $(OFILES) zlib/libz.a ftpproxy/libftpproxy.a
+	$(CC) -o xhopper $(OFILES) zlib/libz.a ftpproxy/libftpproxy.a $(CFLAGS) $(LDFLAGS)
+
+ioconv/ioconv:
+	cd ioconv && make
+
+clean:
+	cd zlib && make clean
+	cd ftpproxy && make clean
+	cd ioconv && make clean
+	rm -f core* xhopper $(OFILES)
+
+dist: clean
+	rm -rf $(DIST)
+	rm -f $(DIST).tar.gz
+	mkdir $(DIST)
+	cp -r zlib-$(ZVER) $(DIST)
+	ln -s zlib-$(ZVER) $(DIST)/zlib
+	cp -r ftpproxy-$(FVER) $(DIST)
+	ln -s ftpproxy-$(FVER) $(DIST)/ftpproxy
+	cp -r ioconv $(DIST)
+	cp $(CFILES) $(HFILES) README COPYING INSTALL genmak configure Makefile.in $(DIST)
+	find $(DIST) -name "CVS" | xargs rm -rf
+	chmod -R u+w  $(DIST)
+	tar cvf $(DIST).tar $(DIST)
+	gzip --best $(DIST).tar
+	rm -rf $(DIST)
+
+install: xhopper ioconv/ioconv
+	if ! [ -d $(bindir) ] ; then mkdir -p $(bindir) ; fi
+	cp xhopper ioconv/ioconv $(bindir)
+	if ! [ -d $(docdir) ] ; then mkdir -p $(docdir) ; fi
+	cp README COPYING $(docdir)
+
+bin-dist: all
+	rm -rf $(BINDIST) ; \
+	rm -rf $(BINDIST).tar.gz ; \
+	mkdir $(BINDIST) ; \
+	if [ $(HOST) = "WIN32" ] || [ $(HOST) = "CYGWINNT" ] ; then \
+	  FILES="xhopper.exe ioconv/ioconv.exe" ; \
+	  EXTRA="/bin/cygwin*.dll README COPYING" ; \
+	else \
+	  FILES="xhopper ioconv/ioconv" ; \
+	  EXTRA="README COPYING" ; \
+	fi ; \
+	strip $$FILES ; \
+	cp $$FILES $$EXTRA $(BINDIST) ; \
+	tar cvf $(BINDIST).tar $(BINDIST) ; \
+	gzip --best $(BINDIST).tar ; \
+	rm -rf $(BINDIST)

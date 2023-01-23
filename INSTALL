@@ -1,0 +1,11 @@
+./configure
+make
+make install 
+
+# alternative you can install xhopper in a more specific directory
+
+make prefix=/usr
+
+# or for RPM packaging
+
+make DESTDIR=/home/martin/foo

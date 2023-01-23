@@ -1,0 +1,6 @@
+#!/bin/sh
+
+( cd zlib && ./configure )
+./genmak . 
+./genmak ftpproxy 
+./genmak ioconv 
